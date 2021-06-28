@@ -137,7 +137,8 @@ def outlier_bound_calculation(df, variable):
     '''
     returns the lowerbound and upperbound values
     '''
-    return print(f'For {variable} the lower bound is {lower_bound} and  upper bound is {upper_bound}')   
+    return print(f'For {variable} the lower bound is {lower_bound} and  upper bound is {upper_bound}')
+
 
 def detect_outliers(df, k, col_list):
     ''' get upper and lower bound for list of columns in a dataframe 
@@ -162,6 +163,55 @@ def detect_outliers(df, k, col_list):
         odf = odf.append(df[(df[f'{col}'] < lower_bound) | (df[f'{col}'] > upper_bound)])
             
     return odf
+
+
+
+def show_outliers(df, k, columns):
+    '''
+    calculates the lower and upper bound to locate outliers and displays them
+    recommended k be 1.5 and entered as integer
+    '''
+    for i in columns:
+        quartile1, quartile3 = np.percentile(df[i], [25,75])
+        IQR_value = quartile3 - quartile1
+        lower_bound = (quartile1 - (k * IQR_value))
+        upper_bound = (quartile3 + (k * IQR_value))
+        print(f'For {i} the lower bound is {lower_bound} and  upper bound is {upper_bound}')
+        
+        
+def remove_outliers(df, k, columns):
+    '''
+    calculates the lower and upper bound to locate outliers in variables and then removes them.
+    recommended k be 1.5 and entered as integer
+    '''
+    for i in columns:
+        quartile1, quartile3 = np.percentile(df[i], [25,75])
+        IQR_value = quartile3 - quartile1
+        lower_bound = (quartile1 - (k * IQR_value))
+        upper_bound = (quartile3 + (k * IQR_value))
+        print(f'For {i} the lower bound is {lower_bound} and  upper bound is {upper_bound}')
+        df = df[(df[i] <= upper_bound) & (df[i] >= lower_bound)]
+        print('-----------------')
+        print('Dataframe now has ', df.shape[0], 'rows and ', df.shape[1], 'columns')
+    return df
+
+def remove_outliers_noprint(df, k, columns):
+    '''
+    calculates the lower and upper bound to locate outliers in variables and then removes them.
+    recommended k be 1.5 and entered as integer
+    '''
+    for i in columns:
+        quartile1, quartile3 = np.percentile(df[i], [25,75])
+        IQR_value = quartile3 - quartile1
+        lower_bound = (quartile1 - (k * IQR_value))
+        upper_bound = (quartile3 + (k * IQR_value))
+
+        df = df[(df[i] <= upper_bound) & (df[i] >= lower_bound)]
+        
+    return df
+        
+        
+        
 
 ###############################
 #  nulls in columns and rows#
@@ -375,6 +425,54 @@ def model_metrics(X_train, y_train, X_validate, y_validate):
 ########################################
 #                scaling
 ########################################
+
+def Min_Max_Scaler(X_train, X_validate, X_test, target):
+    """
+    Takes in X_train, X_validate and X_test dfs with numeric values only
+    Returns scaler, X_train_scaled, X_validate_scaled, X_test_scaled dfs 
+    """
+    scaler = sklearn.preprocessing.MinMaxScaler().fit(X_train)
+    X_train_scaled = pd.DataFrame(scaler.transform(X_train), index = X_train.index, columns = X_train.columns)
+    X_validate_scaled = pd.DataFrame(scaler.transform(X_validate), index = X_validate.index, columns = X_validate.columns)
+    X_test_scaled = pd.DataFrame(scaler.transform(X_test), index = X_test.index, columns = X_test.columns)
+    
+    return X_train_scaled, X_validate_scaled, X_test_scaled
+        
+    
+def train_validate_test_scaled (train, validate, test, target):
+    """
+    Takes in X_train, X_validate and X_test dfs
+    Returns X_train_scaled, y_train_scaled, X_validate_scaled, y_validate_scaled, X_test_scaled, y_test_scaled dfs 
+    """
+    
+    y_train = train[target]
+    X_train = train.drop(columns = target)
+    
+
+    y_validate = validate[target] 
+    X_validate = validate.drop(columns = target)
+    
+    
+    y_test = test[target]
+    X_test = test.drop(columns = target)
+    
+    
+    #### scale and create scaled features and target
+    scaler = MinMaxScaler().fit(X_train)
+    X_train_scaled = pd.DataFrame(scaler.transform(X_train), index = X_train.index, columns = X_train.columns)
+    y_train_scaled = pd.DataFrame(scaler.transform(y_train))
+    
+    
+    X_validate_scaled = pd.DataFrame(scaler.transform(X_validate), index = X_validate.index, columns = X_validate.columns)
+    y_validate_scaled = pd.DataFrame(scaler.transform(y_validate), index = y_validate.index)
+    
+    X_test_scaled = pd.DataFrame(scaler.transform(X_test), index = X_test.index, columns = X_test.columns)
+    y_test_scaled = pd.DataFrame(scaler.transform(y_test), index = y_test.index)
+    
+    return X_train_scaled, y_test_scaled, X_validate_scaled, y_validate_scaled, X_test_scaled, y_test_scaled
+
+
+
 def min_max_scale(X_train, X_validate, X_test, numeric_cols):
     """
     this function takes in 3 dataframes with the same columns,
@@ -432,33 +530,36 @@ def encoding(df, cols, drop_first=True):
  
 def prep_zillow(df):
     '''
-    This function take in the telco_churn data acquired by get_telco_data,
-    Returns prepped train, validate, and test dfs with embarked dummy vars,
-    deck dropped, and the mean of age imputed for Null values.
+    This function take in the zillow data acquired by acquire functintion,
+    Returns prepped train, validate, and test dfs with outliers removed, Null values dropped,
+    and some addtional columns created.
     '''
-    df.set_index('parcelid', drop = True, inplace = True)
-
-    df = df[['bedroomcnt', 'bathroomcnt', 'calculatedfinishedsquarefeet','taxvaluedollarcnt']]
-    df.rename(columns = {'calculatedfinishedsquarefeet':'total_squareft','taxvaluedollarcnt': 'assessment_value'},  inplace = True)
-
-    #dropping duplicate values
-    df.drop_duplicates(inplace = True)
-    # so after reviewing the two columns taxvalue and sqrft, i feel comfortable dropping the NaN values
+    df= df.loc[:, ~df.columns.duplicated()]
+    df.set_index('parcelid', inplace = True)
+    
+    df = handle_missing_values(df)
+    #dropping nan values
+    df.dropna(inplace = True )
+    df = remove_columns(df,['propertylandusedesc','finishedsquarefeet12', 'censustractandblock','propertycountylandusecode', 
+                                    'rawcensustractandblock', 'assessmentyear','id', 'regionidcity', 'roomcnt','propertylandusetypeid','calculatedbathnbr'])
+    df.rename(columns = {'calculatedfinishedsquarefeet':'total_square_ft'}, inplace = True)
+    df['acres'] = df.lotsizesquarefeet/43560
+    df['structure_dollar_per_sqft'] = df.structuretaxvaluedollarcnt/df.total_square_ft
+    df['land_dollar_per_sqft'] = df.landtaxvaluedollarcnt/df.lotsizesquarefeet
+    df['county_name'] = df['fips'].map({6037:'Los_Angeles', 6059:'Orange', 6111:'Ventura'})
+    df['house_age'] = (2017-df.yearbuilt)
+    #dropping columns
+    df.drop(columns = ['regionidzip', 'fips', 'fullbathcnt','transactiondate','regionidcounty','yearbuilt','taxvaluedollarcnt','lotsizesquarefeet',
+                          'structuretaxvaluedollarcnt','landtaxvaluedollarcnt','taxamount'], inplace = True)   
+    df['total_square_ft'] = df['total_square_ft'].astype(int)
+    df['structure_dollar_per_sqft'] = df['structure_dollar_per_sqft'].astype(int)
+    df['land_dollar_per_sqft'] = df['land_dollar_per_sqft'].astype(int)
+    df['house_age'] = df['house_age'].astype(int)
+    
+    
+    # dropping null values.
     df.dropna(inplace = True)
 
-    #dropping outliers
-    df= df[(df['assessment_value'] < 1276040)& (df['assessment_value']>0)]
-    df= df[(df['total_squareft'] < 3882) & (df['total_squareft']>0)]
-    df = df[(df['bedroomcnt'] < 5.5) &  (df['bedroomcnt']>1.5)]
-    df= df[(df['bathroomcnt'] < 4.5) & (df['bathroomcnt']>0.5)]
-
-
-    #created additional columns to represent less than and greater than with 0 and 1 value
-    df['three_or_less_bedrooms']  =  pd.cut(x=df['bedroomcnt'], bins=[2, 3], right = True, include_lowest = True, labels = [1]).astype('object').fillna(0).astype('int')
-    df['four_or_more_bedrooms']  =  pd.cut(x=df['bedroomcnt'], bins=[4, 5], right = True, include_lowest = True, labels = [1]).astype('object').fillna(0).astype('int')
-    df['three_or_more_bathrooms']  =  pd.cut(x=df['bedroomcnt'], bins=[3, 4], right = True, include_lowest = True, labels = [1]).astype('object').fillna(0).astype('int')
-    df['two_half_or_less_bathrooms']  =  pd.cut(x=df['bedroomcnt'], bins=[1, 2.5], right = True, include_lowest = True, labels = [1]).astype('object').fillna(0).astype('int')
-    df.drop(columns = ['bathroomcnt', 'bedroomcnt'], inplace = True)
     
     return df
 
