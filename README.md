@@ -6,7 +6,7 @@
 #### Project Objectives
 > - Document code, process (data acquistion, preparation, exploratory data analysis utilizing clustering and statistical testing, modeling, and model evaluation), findings, and key takeaways in a Jupyter Notebook report.
 > - Figure out what are driving the errors in the Zestimates?.
-> - Show distribution of tax rates for each county so that we can see how much they vary within the properties in the county and the rates the bulk of the properties sit around.
+> - Utilize clustering to create features for modeling.
 
 
 #### Goals
@@ -31,18 +31,11 @@
 
 |Target|Datatype|Definition|
 |:-------|:--------|:----------|
-| logerror| | 𝑙𝑜𝑔𝑒𝑟𝑟𝑜𝑟=𝑙𝑜𝑔(𝑍𝑒𝑠𝑡𝑖𝑚𝑎𝑡𝑒)−𝑙𝑜𝑔(𝑆𝑎𝑙𝑒𝑃𝑟𝑖𝑐𝑒)
+| logerror| float64 | 𝑙𝑜𝑔𝑒𝑟𝑟𝑜𝑟=𝑙𝑜𝑔(𝑍𝑒𝑠𝑡𝑖𝑚𝑎𝑡𝑒)−𝑙𝑜𝑔(𝑆𝑎𝑙𝑒𝑃𝑟𝑖𝑐𝑒)
 
-|Feature|Datatype|Definition|
-|:-------|:--------|:----------|
-|bathroomcnt| |    Number of bathrooms in home including fractional bathrooms |
-|bedroomcnt | |    Number of bedrooms in home. 
-|fips | |     Federal Information Processing Standard code -  see https://en.wikipedia.org/wiki/FIPS_county_code for more details.
-|parcelid| |   Unique identifier for parcels (lots). 
-|taxamount| |   The total property tax assessed for that assessment year.
-|tax_rate||   tax rate for property.
-|county_name||     county name for fip value.
-|total_squareft||    Calculated total finished living area of the home. 
+> - For Data Dictionary please see link below:
+> - https://github.com/RobLMurphy92/clustering_zillow_project/blob/master/zillow_data_dictionary.xlsx
+
 
 
 
@@ -62,20 +55,54 @@
 > - Choose the model which performs the best, then run that model on the test dataset.
 > - Present conclusions and main takeaways.
 
-#### Initial Hypotheses:
+#### Hypotheses: 
+##### Pre Clustering
 
-> - **Hypothesis 1 -** I rejected the Null Hypothesis; .
+> - **Hypothesis 1 -** I rejected the Null Hypothesis.
 > - alpha = .05
-> - Hypothesis Null: 
-> - Hypothesis Alternative : 
+> - Hypothesis Null: 'There is no relationship between logerror and house_age'
+> - Hypothesis Alternative : 'There is a relationship between logerror and house_age'
 
-> - **Hypothesis 2 -** I rejected the Null Hypothesis;.
+
+> - **Hypothesis 2 -** I rejected the Null Hypothesis.
 > - alpha = .05
-> - Hypothesis Null : 
-> - Hypothesis Alternative : 
+> - Hypothesis Null : 'There is no relationship between logerror and total_square_ft'
+> - Hypothesis Alternative : 'There is a relationship between logerror and total_square_ft'
+
+> - **Hypothesis 3 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null : 'There is no relationship between logerror and latitude'
+> - Hypothesis Alternative : 'There is a relationship between logerror and latitude'
+
+> - **Hypothesis 4 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null : "There is no significant difference in the logerrors for those who have four or more bedrooms than those who dont."
+> - Hypothesis Alternative : "There is a significant difference in the logerrors for those who have four or more bedrooms than those who dont."
+
+> - **Hypothesis 5 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null : "There is no significant difference in the logerrors for homes with less than 2500 sqrft than homes with greater than."
+> - Hypothesis Alternative : "There is a significant difference in the logerrors for homes with less than 2500 sqrft than homes with greater than."
+
+> - **Hypothesis 6 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null : "There is no significant difference in the logerrors for homes greater than 60 years old than homes less than 60 years old"
+> - Hypothesis Alternative : "There is a significant difference in the logerrors for homes greater than 60 years old than homes less than 60 years old"
 
 
+#### Hypotheses: 
+##### Post Clustering
 
+> - **Hypothesis 1 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null: 'is no difference in the means of the individual clusters logerrors to the population logerror mean.'
+> - Hypothesis Alternative: 'is a significant difference in the means of the clusters logerrors.'
+
+
+> - **Hypothesis 2 -** I rejected the Null Hypothesis.
+> - alpha = .05
+> - Hypothesis Null : 'is no difference in the means of the individual clusters logerrors to the population logerror mean.
+> - Hypothesis Alternative : 'is a difference in the means of the individual clusters logerrors to the population logerror mean.
 
 
 ### Reproduce My Project:
